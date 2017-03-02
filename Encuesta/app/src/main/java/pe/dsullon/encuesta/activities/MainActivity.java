@@ -1,4 +1,4 @@
-package pe.dsullon.encuesta;
+package pe.dsullon.encuesta.activities;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -11,19 +11,30 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.RatingBar;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 
 import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.Priority;
 import com.androidnetworking.error.ANError;
 import com.androidnetworking.interfaces.JSONObjectRequestListener;
+import com.androidnetworking.interfaces.StringRequestListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import pe.dsullon.encuesta.R;
+import pe.dsullon.encuesta.models.Area;
+
 public class MainActivity extends AppCompatActivity {
-    TextInputEditText editTextLugar;
+    Spinner spinnerArea;
     TextInputEditText editTextComentario;
     RatingBar rating;
+    List<Area> areas;
+    ArrayList<String> areasAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,19 +42,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        editTextLugar = (TextInputEditText)findViewById(R.id.etLugar);
+        AndroidNetworking.initialize(getApplicationContext());
+        spinnerArea = (Spinner)findViewById(R.id.spinnerSkill);
         editTextComentario = (TextInputEditText) findViewById(R.id.etComentario);
         rating = (RatingBar) findViewById(R.id.ratingBar);
-
+        listarArea();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 evaluar();
-                String mensaje = "Lugar: " + editTextLugar.getText().toString() + ".";
-                mensaje += " su valoración es: " + String.valueOf(rating.getRating()) + ".";
+                String mensaje = " su valoración es: " + String.valueOf(rating.getRating()) + ".";
                 Snackbar.make(view, mensaje, Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                        .setAction("Action",  null).show();
             }
         });
     }
@@ -73,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
     private void evaluar() {
         AndroidNetworking.post("http://www.aislamontajes.com.pe/api/eval")
                 .addHeaders("Content-Type", "application/x-www-form-urlencoded")
-                .addBodyParameter("lugar", editTextLugar.getText().toString())
+                .addBodyParameter("lugar",spinnerArea.getSelectedItem().toString())
                 .addBodyParameter("valoracion",String.valueOf(rating.getRating()))
                 .addBodyParameter("comentario",  editTextComentario.getText().toString())
                 .setTag("Evaluar")
@@ -97,6 +108,36 @@ public class MainActivity extends AppCompatActivity {
                     public void onError(ANError anError) {
                         Log.d("Login", "Error: " + anError.getErrorBody());
 
+                    }
+                });
+    }
+
+    private void listarArea(){
+        AndroidNetworking.get("http://www.aislamontajes.com.pe/api/areas")
+                .setTag("areas")
+                .setPriority(Priority.LOW)
+                .build()
+                .getAsJSONObject(new JSONObjectRequestListener() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            if(response.getString("status").equalsIgnoreCase("ok")) {
+                                areas = Area.build(response.getJSONArray("areas"));
+                                areasAdapter = new ArrayList<>();
+                                for(int i = 0; i < areas.size(); i++) {
+                                    areasAdapter.add(areas.get(i).getNombre());
+                                }
+                                spinnerArea.setAdapter(new ArrayAdapter<String>(MainActivity.this,
+                                        android.R.layout.simple_spinner_dropdown_item,
+                                        areasAdapter));
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    @Override
+                    public void onError(ANError error) {
+                        Log.d("Areas", "Error: " + error.getErrorBody());
                     }
                 });
     }

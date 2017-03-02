@@ -11,23 +11,18 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:orientation="vertical"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="pe.dsullon.encuesta.MainActivity"
+    tools:context="pe.dsullon.encuesta.activities.MainActivity"
     tools:showIn="@layout/activity_main">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Encuesta de satisfacción" />
-    <android.support.design.widget.TextInputLayout
+        android:text="Ud. visitó el área de:"
+        android:paddingTop="20dp"/>
+    <Spinner
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="30dp">
-        <android.support.design.widget.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Ingrese lugar"
-            android:id="@+id/etLugar"/>
-    </android.support.design.widget.TextInputLayout>
+        android:id="@+id/spinnerSkill"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
