@@ -41,6 +41,11 @@ public class Area {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return nombre;
+    }
+
     public static Area build(JSONObject jsonSource) {
         Area vehicle = new Area();
         try {

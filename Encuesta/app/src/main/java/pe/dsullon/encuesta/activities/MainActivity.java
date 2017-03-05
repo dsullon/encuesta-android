@@ -18,7 +18,6 @@ import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.Priority;
 import com.androidnetworking.error.ANError;
 import com.androidnetworking.interfaces.JSONObjectRequestListener;
-import com.androidnetworking.interfaces.StringRequestListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,30 +33,43 @@ public class MainActivity extends AppCompatActivity {
     TextInputEditText editTextComentario;
     RatingBar rating;
     List<Area> areas;
-    ArrayList<String> areasAdapter;
+    ArrayList<Area> areasAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //TODO: Revisar el código, entender y proponer posible refactoring
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         AndroidNetworking.initialize(getApplicationContext());
+
         spinnerArea = (Spinner)findViewById(R.id.spinnerSkill);
         editTextComentario = (TextInputEditText) findViewById(R.id.etComentario);
         rating = (RatingBar) findViewById(R.id.ratingBar);
-        listarArea();
+
+        cargarListaAreas();
+
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        //TODO: Revisa, refactorizar, el mensaje debe ser acorde al resultado de grabación
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                evaluar();
+
+                grabarEncuesta();
+
                 String mensaje = " su valoración es: " + String.valueOf(rating.getRating()) + ".";
                 Snackbar.make(view, mensaje, Snackbar.LENGTH_LONG)
                         .setAction("Action",  null).show();
+
+                limpiarEncuesta();
             }
         });
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -81,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void evaluar() {
+    private void grabarEncuesta() {
         AndroidNetworking.post("http://www.aislamontajes.com.pe/api/eval")
                 .addHeaders("Content-Type", "application/x-www-form-urlencoded")
                 .addBodyParameter("lugar",spinnerArea.getSelectedItem().toString())
@@ -112,8 +124,16 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void listarArea(){
-        AndroidNetworking.get("http://www.aislamontajes.com.pe/api/areas")
+    private void cargarListaAreas(List<Area> areas){
+        spinnerArea.setAdapter(new ArrayAdapter<Area>(MainActivity.this,
+                android.R.layout.simple_spinner_dropdown_item,
+                areas));
+    }
+
+    private void cargarListaAreas(){
+        String urlListaAreas = "http://www.aislamontajes.com.pe/api/areas";
+
+        AndroidNetworking.get(urlListaAreas)
                 .setTag("areas")
                 .setPriority(Priority.LOW)
                 .build()
@@ -122,23 +142,45 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(JSONObject response) {
                         try {
                             if(response.getString("status").equalsIgnoreCase("ok")) {
-                                areas = Area.build(response.getJSONArray("areas"));
-                                areasAdapter = new ArrayList<>();
-                                for(int i = 0; i < areas.size(); i++) {
-                                    areasAdapter.add(areas.get(i).getNombre());
-                                }
-                                spinnerArea.setAdapter(new ArrayAdapter<String>(MainActivity.this,
-                                        android.R.layout.simple_spinner_dropdown_item,
-                                        areasAdapter));
+
+                                areasAdapter = serializarAreas(response);
+                                cargarListaAreas(areasAdapter);
                             }
                         } catch (JSONException e) {
-                            e.printStackTrace();
+                            Log.d("ListarArea", "Error:" + e.getMessage());
                         }
                     }
+
                     @Override
                     public void onError(ANError error) {
                         Log.d("Areas", "Error: " + error.getErrorBody());
                     }
                 });
     }
+
+    private ArrayList<Area> serializarAreas(JSONObject response) throws JSONException {
+        List<Area> jsonAreas = Area.build(response.getJSONArray("areas"));
+        ArrayList<Area> listaAreas = new ArrayList<Area>();
+
+        //TODO: Revisar como mapear directamente areasAdapet/areas, es posible?
+
+        for(int i = 0; i < jsonAreas.size(); i++) {
+            Area areafromService = jsonAreas.get(i);
+
+            String nombreArea = areafromService.getNombre();
+            String idArea = areafromService.getId();
+
+            Area areaItem = new Area(idArea, nombreArea);
+            listaAreas.add(areaItem);
+        }
+
+        return listaAreas;
+    }
+
+    private void limpiarEncuesta() {
+        spinnerArea.setSelection(0, false);
+        rating.setRating(0);
+        editTextComentario.setText("");
+    }
+
 }
