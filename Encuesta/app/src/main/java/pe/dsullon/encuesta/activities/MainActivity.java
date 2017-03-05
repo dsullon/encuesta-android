@@ -93,33 +93,41 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void grabarEncuesta() {
-        AndroidNetworking.post("http://www.aislamontajes.com.pe/api/eval")
-                .addHeaders("Content-Type", "application/x-www-form-urlencoded")
-                .addBodyParameter("lugar",spinnerArea.getSelectedItem().toString())
-                .addBodyParameter("valoracion",String.valueOf(rating.getRating()))
-                .addBodyParameter("comentario",  editTextComentario.getText().toString())
-                .setTag("Evaluar")
-                .setPriority(Priority.MEDIUM)
+    private void cargarListaAreas(){
+        final String nombreMetodo = "cargarListaAreas";
+
+        String urlListaAreas = "http://www.aislamontajes.com.pe/api/areas";
+
+        AndroidNetworking.get(urlListaAreas)
+                .setTag("areas")
+                .setPriority(Priority.LOW)
                 .build()
                 .getAsJSONObject(new JSONObjectRequestListener() {
-
                     @Override
                     public void onResponse(JSONObject response) {
+                        String nombreEvento = "onResponse";
+                        String tag = nombreMetodo + "-" + nombreEvento;
+
                         try {
                             if(response.getString("status").equalsIgnoreCase("ok")) {
 
+                                areasAdapter = serializarAreas(response);
+                                cargarListaAreas(areasAdapter);
                             }
                         } catch (JSONException e) {
-                            Log.d("Login", "Error: " + e.getMessage());
-                            e.printStackTrace();
+                            Log.e(tag, e.getMessage());
+
+                        } catch (Exception e) {
+                            Log.e(tag, e.getMessage());
                         }
                     }
 
                     @Override
-                    public void onError(ANError anError) {
-                        Log.d("Login", "Error: " + anError.getErrorBody());
+                    public void onError(ANError error) {
+                        String nombreEvento = "onError";
+                        String tag = nombreMetodo + "-" + nombreEvento;
 
+                        Log.e(tag, error.getErrorBody());
                     }
                 });
     }
@@ -130,30 +138,46 @@ public class MainActivity extends AppCompatActivity {
                 areas));
     }
 
-    private void cargarListaAreas(){
-        String urlListaAreas = "http://www.aislamontajes.com.pe/api/areas";
+    private void grabarEncuesta() {
+        final String nombreMetodo = "grabarEncuesta";
+        String urlGrabarEncuesta = "http://www.aislamontajes.com.pe/api/eval";
 
-        AndroidNetworking.get(urlListaAreas)
-                .setTag("areas")
-                .setPriority(Priority.LOW)
+
+        AndroidNetworking.post(urlGrabarEncuesta)
+                .addHeaders("Content-Type", "application/x-www-form-urlencoded")
+                .addBodyParameter("lugar", spinnerArea.getSelectedItem().toString())
+                .addBodyParameter("valoracion",String.valueOf(rating.getRating()))
+                .addBodyParameter("comentario",  editTextComentario.getText().toString())
+                .setTag("Evaluar")
+                .setPriority(Priority.MEDIUM)
                 .build()
                 .getAsJSONObject(new JSONObjectRequestListener() {
+
                     @Override
                     public void onResponse(JSONObject response) {
+                        String nombreEvento = "onResponse";
+                        String tag = nombreMetodo + "-" + nombreEvento;
+
                         try {
                             if(response.getString("status").equalsIgnoreCase("ok")) {
+                                //TODO: Aquí qué debe haber? Evaluar convertir en método que retorne resultado boolean
+                                Log.i(tag, "La encuesta se grabó con exito!"); //Log temporal hasta resolver este caso de refactoring
 
-                                areasAdapter = serializarAreas(response);
-                                cargarListaAreas(areasAdapter);
                             }
                         } catch (JSONException e) {
-                            Log.d("ListarArea", "Error:" + e.getMessage());
+                            Log.e(tag, e.getMessage());
+
+                        } catch (Exception e) {
+                            Log.e(tag, e.getMessage());
                         }
                     }
 
                     @Override
-                    public void onError(ANError error) {
-                        Log.d("Areas", "Error: " + error.getErrorBody());
+                    public void onError(ANError anError) {
+                        String nombreEvento = "onError";
+                        String tag = nombreMetodo + "-" + nombreEvento;
+
+                        Log.e(tag, anError.getMessage());
                     }
                 });
     }
