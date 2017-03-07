@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
                 grabarEncuesta();
 
                 String mensaje = " su valoración es: " + String.valueOf(rating.getRating()) + ".";
-                Snackbar.make(view, mensaje, Snackbar.LENGTH_LONG)
-                        .setAction("Action",  null).show();
+
+                mostrarMensaje(mensaje);
 
                 limpiarEncuesta();
             }
@@ -89,6 +89,12 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             return true;
         }
+
+        //TODO: Falta implementar iniciar sesión
+        if (id == R.id.action_sign_in) {
+            mostrarMensaje("Falta implementar iniciar sesión");
+        }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -207,4 +213,11 @@ public class MainActivity extends AppCompatActivity {
         editTextComentario.setText("");
     }
 
+    private void mostrarMensaje(String mensaje) {
+
+        View view = getWindow().getDecorView().findViewById(R.id.content_main);
+
+        Snackbar.make(view, mensaje, Snackbar.LENGTH_LONG)
+                .setAction("Action",  null).show();
+    }
 }
